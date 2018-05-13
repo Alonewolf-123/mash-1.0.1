@@ -32,24 +32,38 @@ Coin Specification
 
 Coin Specifications
 
-Name:   MASH
-Ticker:    MSH
+Name:   MASH
+
+Ticker:    MSH
+
 Type:   POS and Pow/Masternode
-Max supply:  21.000.000
+
+Max supply:  210.000.000
+
 Pre mine:  840.000
+
 Algorithm:  x11
+
 Block TIme: 1 Minute
-Collateral: 1000 MASH
 
+Collateral: 10000 MASH
 
-POW - 1 block Pre-mine = 0.4% = 84,000 coins
+POW - 1 block Pre-mine = 0.4% = 840,000 coins
+
 Early investor, Bounties, airdrop, pre-sale, future development
-POW - 4000 blocks POW ENDS -   1
+
+POW - 200 blocks POW ENDS -   1
+
 POW - end
+
 POS + MN Starts 
-4001- 4500 blocks   -   5 
+
+201- 4500 blocks   -   5 
+
 4501-8500 blocks   -   20 
+
 8501- 21000 blocks   -   25 
+
 after 21001 blocks   -   30
 
 
