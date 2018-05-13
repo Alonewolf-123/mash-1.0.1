@@ -1,9 +1,9 @@
-Mash Core integration/staging tree
+Mash Core 
 ===================================
 
 [![Build Status](https://travis-ci.org/mash/mash.svg?branch=master)](https://travis-ci.org/mash/mash)
 
-https://www.mashnet.info
+https://mashcoin.info
 
 What is Mash?
 --------------
@@ -14,8 +14,12 @@ with no central authority: managing transactions and issuing money are carried
 out collectively by the network. Mash Core is the name of open source
 software which enables the use of this currency.
 
+Our vision is to make a steady passive income for our investors which are sustainable over the long term.
+We will use the advantages of latest technologies in the area of machine learning, data and math analysis, artificial intelligence, blockchain and mobile development in order to bring to life a fully
+autonomous clever trading bot.
+
 For more information, as well as an immediately useable, binary version of
-the Mash Core software, see https://www.mashnet.info/.
+the Mash Core software, see https://mashcoin.info
 
 License
 -------
@@ -23,27 +27,31 @@ License
 Mash Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
 information or see http://opensource.org/licenses/MIT.
 
-Development process
+Coin Specification
 -------------------
 
-Developers work in their own trees, then submit pull requests when they think
-their feature or bug fix is ready.
+Coin Specifications
 
-If it is a simple/trivial/non-controversial change, then one of the Mash
-development team members simply pulls it.
+Name:   MASH
+Ticker:    MSH
+Type:   POS and Pow/Masternode
+Max supply:  21.000.000
+Pre mine:  840.000
+Algorithm:  x11
+Block TIme: 1 Minute
+Collateral: 1000 MASH
 
-If it is a *more complicated or potentially controversial* change, then the patch
-submitter will be asked to start a discussion (if they haven't already) on the
-[mailing list](https://lists.linuxfoundation.org/mailman/listinfo/mash-dev)
 
-The patch will be accepted if there is broad consensus that it is a good thing.
-Developers should expect to rework and resubmit patches if the code doesn't
-match the project's coding conventions (see [doc/coding.md](doc/coding.md)) or are
-controversial.
+POW - 1 block Pre-mine = 0.4% = 84,000 coins
+Early investor, Bounties, airdrop, pre-sale, future development
+POW - 4000 blocks POW ENDS -   1
+POW - end
+POS + MN Starts 
+4001- 4500 blocks   -   5 
+4501-8500 blocks   -   20 
+8501- 21000 blocks   -   25 
+after 21001 blocks   -   30
 
-The `master` branch is regularly built and tested, but is not guaranteed to be
-completely stable. [Tags](https://github.com/mash/mash/tags) are created
-regularly to indicate new official, stable release versions of Mash.
 
 Testing
 -------
