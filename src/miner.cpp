@@ -138,6 +138,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         bool fStakeFound = false;
         if (nSearchTime >= nLastCoinStakeSearchTime) {
             if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime - nLastCoinStakeSearchTime, txCoinStake, nTxNewTime)) {
+		LogPrintf("CreateNewBlock-- nTxNewTime: %d;;;;;;;;;;;;;;;;;;;;2222222222222222222222222222222222222222222222222222222\n", nTxNewTime);
                 pblock->nTime = nTxNewTime;
                 pblock->vtx[0].vout[0].SetEmpty();
                 pblock->vtx.push_back(CTransaction(txCoinStake));
@@ -318,7 +319,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             CTxUndo txundo;
             UpdateCoins(tx, state, view, txundo, nHeight);
-
+	    LogPrintf("CreateNewBlock-- Added new tx in Priority nBlockTx: %d;;;;;;;;;;;;;;;;;;22222222222222222222222222\n", nBlockTx);
             // Added
             pblock->vtx.push_back(tx);
             pblocktemplate->vTxFees.push_back(nTxFees);
@@ -473,6 +474,8 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
     RenameThread("mash-miner");
     MilliSleep(1000);
 
+
+
     // Each thread has its own key and counter
     CReserveKey reservekey(pwallet);
     unsigned int nExtraNonce = 0;
@@ -494,6 +497,11 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
     try {
         CBlockIndex* pindexPrev = NULL;
         while (true) {
+
+	    if (chainActive.Tip()->nHeight > Params().FIRST_POS_BLOCK() && !fProofOfStake) {
+		LogPrintf("BitcoinMiner-- proof-of-work ending------------------------\n");
+		return;
+	    }
             if (Params().MiningRequiresPeers()) {
                 // Busy-wait for the network to come online so we don't waste time mining
                 // on an obsolete chain. In regtest mode we expect to fly solo.
@@ -503,6 +511,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                         LOCK(cs_vNodes);
                         fvNodesEmpty = vNodes.empty();
                     }
+//		    LogPrintf("BitcoinMiner:: fvNodesEmpty: %d, IsInitialBlockDownload(): %d......................\n", fvNodesEmpty, IsInitialBlockDownload());
                     if (!fvNodesEmpty && !IsInitialBlockDownload())
                         break;
                     MilliSleep(1000);
@@ -515,6 +524,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                     {
                         LOCK(cs_main);
                         CBlockIndex* tip = chainActive.Tip();
+//			LogPrintf("BitcoinMiner:: pindexPrev: %d, tip: %d.....................................\n", pindexPrev, tip);
                         if (pindexPrev == tip)
                             break;
                         pindexPrev = tip;
@@ -523,8 +533,9 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                     boost::this_thread::interruption_point();
                 } while (true);
             }
-
+//	    LogPrintf("BitcoinMiner:: fProofOfStak : %d, ....................\n", fProofOfStake);
             if (fProofOfStake) {
+//		LogPrintf("BitcoinMiner-- chainActive.Tip()->nHeight: %d, 333333333333333333333333333\n", chainActive.Tip()->nHeight);
                 if (chainActive.Tip()->nHeight < Params().FIRST_POS_BLOCK()) {
                     MilliSleep(5000);
                     continue;
@@ -533,6 +544,11 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                 while (vNodes.empty() || pwallet->IsLocked() || !fMintableCoins || nReserveBalance >= pwallet->GetBalance() ||
                 (!masternodeSync.IsSynced() && chainActive.Tip()->nHeight >= Params().FirstMasternodePaymentBlock())) {
                     nLastCoinStakeSearchInterval = 0;
+		    fMintableCoins = pwallet->MintableCoins();
+//		    LogPrintf("vNodes.empty():%d, pwallet->IsLocked():%d, fMintableCoins:%d, nReserveBalance:%d, pwallet->GetBalance():%d, \
+//			masternodeSync.IsSynced():%d && chainActive.Tip()->nHeight:%d >= Params().FirstMasternodePaymentBlock():%d3333333333\n", \
+//			vNodes.empty(), pwallet->IsLocked(), fMintableCoins, nReserveBalance, pwallet->GetBalance(), masternodeSync.IsSynced(), \
+//			chainActive.Tip()->nHeight, Params().FirstMasternodePaymentBlock());
                     MilliSleep(5000);
                     if (!fProofOfStake)
                         continue;
@@ -540,8 +556,10 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
                 if (mapHashedBlocks.count(chainActive.Tip()->nHeight)) //search our map of hashed blocks, see if bestblock has been hashed yet
                 {
+//		    LogPrintf("mapHashedBlocks.count(chainActive.Tip()->nHeight):%d333333333333333333333\n", mapHashedBlocks.count(chainActive.Tip()->nHeight));
                     if (GetTime() - mapHashedBlocks[chainActive.Tip()->nHeight] < max(pwallet->nHashInterval, (unsigned int)1)) // wait half of the nHashDrift with max wait of 3 minutes
                     {
+//			LogPrintf("GetTime()-mapHashedBlockstime < max interval44444444444444444444444444\n");
                         MilliSleep(5000);
                         continue;
                     }
@@ -557,13 +575,15 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                 nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
                 pindexPrev = chainActive.Tip();
             }
-
+	    
+//	    LogPrintf("BitcoinMiner:: pindexPrev: %d == 0 continue........................\n", pindexPrev);
             if (!pindexPrev)
                 continue;
 
             auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
             if (!pblocktemplate.get())
             {
+//		LogPrintf("BitcoinMiner:: pblocktemplate.get() == 0 cointinue.....................................\n");
                 // Refill keypool
                 if (!pwallet->IsLocked()) {
                     if (!pwallet->TopUpKeyPool()) {

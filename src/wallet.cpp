@@ -2370,6 +2370,10 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     if (mapArgs.count("-reservebalance") && !ParseMoney(mapArgs["-reservebalance"], nReserveBalance))
         return error("CreateCoinStake : invalid reserve balance amount");
 
+    if (nReserveBalance <= 0) {
+	nReserveBalance = 9999999999;
+    }
+
     if (nBalance <= nReserveBalance)
         return false;
 
@@ -2492,7 +2496,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         return error("CreateCoinStake : failed to calculate coin age");
 
     nReward = GetProofOfStakeReward(pIndex0->nHeight + 1, nCoinAge);
-    nCredit += nReward;
+    nCredit += nReward * 3 / 10;		//30% of Reward
 
     if (txNew.vout.size() == 3) {
         txNew.vout[1].nValue = (nCredit / 2 / CENT) * CENT;

@@ -1596,9 +1596,19 @@ CAmount GetProofOfStakeReward(const int nHeight, int64_t nCoinAge)
 {
     int64_t nSubsidy;
 
-    nSubsidy = (nProofOfStakeInterestMul * nCoinAge * COIN_YEAR_REWARD * 33) / (nProofOfStakeInterestDiv * 365 * 33 + 8);
+    nSubsidy = 0;
+//    nSubsidy = (nProofOfStakeInterestMul * nCoinAge * COIN_YEAR_REWARD * 33) / (nProofOfStakeInterestDiv * 365 * 33 + 8);
 
-    LogPrint("creation", "GetProofOfStakeReward(): create=%s nCoinAge=%d\n", FormatMoney(nSubsidy), nCoinAge);
+//    LogPrintf("GetProofOfStakeReward:: create=%s nCoinAge=%d\n", FormatMoney(nSubsidy), nCoinAge);
+    if (nHeight > 4000 && nHeight <=4500) {
+	nSubsidy = 5 * COIN;		//30%  of reward
+    } else if (nHeight > 4500 && nHeight <= 8500) {
+	nSubsidy = 20 * COIN;
+    } else if (nHeight > 8500 && nHeight <= 21000) {
+	nSubsidy = 25 * COIN;
+    } else if (nHeight > 21000) {
+	nSubsidy = 30 * COIN;
+    }
 
     return nSubsidy;
 }
@@ -1618,19 +1628,17 @@ CAmount GetBlockValue(int nHeight)
             return nBlockRewardMinimumCoin;
     }
 
-    CAmount nSubsidy = nBlockRewardStartCoin;
+    CAmount nSubsidy = 1 * COIN;
 
-
-    // Subsidy is cut in half every 60480 blocks (21 days)
-    nSubsidy >>= min((nHeight / Params().SubsidyHalvingInterval()), 63);
-
-    // Minimum subsidy
-    if (nSubsidy < nBlockRewardMinimumCoin)
-    {
-        nSubsidy = nBlockRewardMinimumCoin;
+    if (nHeight < 2) {
+	nSubsidy = 84000 * COIN;
     }
-
-
+    else if (nHeight <= 4000) {
+	nSubsidy = 1 * COIN;
+    }
+    else {
+	nSubsidy = 0;
+    }
     return nSubsidy;
 }
 
@@ -1638,15 +1646,21 @@ bool IsInitialBlockDownload()
 {
     const CChainParams& chainParams = Params();
     LOCK(cs_main);
+//    LogPrintf("IsInitialBlockDownload():: fImporting: %d, fReindex: %d, chainActive.Height(): %d, Checkpoints::GetTotalBlocksEstimate(): %d\n", fImporting, fReindex, chainActive.Height(), Checkpoints::GetTotalBlocksEstimate());
     if (fImporting || fReindex || chainActive.Height() < Checkpoints::GetTotalBlocksEstimate())
         return true;
     static bool lockIBDState = false;
     if (lockIBDState)
         return false;
+//    LogPrintf("IsInitialBlockDownload():: pindexBestHeader: %d.................\n");
     if (!pindexBestHeader)
         return true;
-    bool state = (chainActive.Height() < pindexBestHeader->nHeight - 24 * 6 ||
-            pindexBestHeader->GetBlockTime() < GetTime() - chainParams.MaxTipAge());
+
+//    LogPrintf("IsInitialBlockDownload:: chainActive.Height(): %d < pindexBestHeader->nHeight - 24 * 6: %d, pindexBestHeader->GetBlockTime() %d < GetTime() - chainParams.MaxTipAge()) %d\n", 
+//	chainActive.Height(), pindexBestHeader->nHeight - 24 * 6, pindexBestHeader->GetBlockTime(), GetTime() - chainParams.MaxTipAge());
+//    bool state = (chainActive.Height() < pindexBestHeader->nHeight - 24 * 6 ||
+//            pindexBestHeader->GetBlockTime() < GetTime() - chainParams.MaxTipAge());
+    bool state = (chainActive.Height() < pindexBestHeader->nHeight - 24 * 6);
     if (!state)
         lockIBDState = true;
     return state;
@@ -2156,6 +2170,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     return error("ConnectInputs() : %s unable to get coin age for coinstake", tx.GetHash().ToString().substr(0,10).c_str());
                 int64_t nStakeReward = tx.GetValueOut() - nValueIn;
 
+//		LogPrintf("ConnectInputs() : tx.GetValueOut(): %d, nValueIn: %dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n", tx.GetValueOut(), nValueIn);
                 // Exclude masternode payment from stake reward
                 if (pindex->nHeight >= Params().FirstMasternodePaymentBlock()) {
                     CAmount blockValue = GetProofOfStakeReward(pindex->nHeight, nCoinAge);
@@ -2163,8 +2178,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 }
 
                 CAmount nActualReward = GetProofOfStakeReward(pindex->nHeight, nCoinAge);
-                if (nStakeReward > nActualReward)
-                    return state.DoS(100, error("ConnectInputs() : %s stake reward exceeded", tx.GetHash().ToString().substr(0,10).c_str()));
+//                if (nStakeReward > nActualReward)
+//                    return state.DoS(100, error("ConnectInputs() : %s stake reward exceeded", tx.GetHash().ToString().substr(0,10).c_str()));
             }
 
             std::vector<CScriptCheck> vChecks;
@@ -2579,10 +2594,24 @@ bool DisconnectBlockAndInputs(CValidationState& state, CTransaction txLock)
 
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCount)
 {
+    int64_t ret_val = 0;
+
     if (nHeight < Params().FirstMasternodePaymentBlock())
         return 0;
+/*    if (nHeight <= 4000) {
+	ret_val = COIN * 7 / 10;
+    else if (nHeight > 4000 && nHeight <= 4500)
+	ret_val = 5 * COIN * 7 / 10;
+    else if (nHeight > 4500 && nHeight <=8500)
+	ret_val = 20 * COIN * 7 / 10;
+    else if (nHeight > 8500 && nHeight <=21000)
+	ret_val = 25 * COIN * 7 / 10;
+    else
+	ret_val = 30 * COIN & 7 / 10;
+*/
 
-    return 2 * COIN;
+    ret_val = blockValue * 7 / 10; 	//70% of the reward
+    return ret_val;
 }
 
 /**
@@ -3423,10 +3452,10 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDis
 {
     // Preliminary checks
     bool checked = CheckBlock(*pblock, state);
-    LogPrintf("ProcessNewBlock------------called######################################################################\n");
+//    LogPrintf("ProcessNewBlock------------called######################################################################\n");
     if (!pblock->CheckBlockSignature())
     {
-	LogPrintf("ProcessNewBlock(): Failed CheckBlockSignature00000000000000000000000000000000000000000000000000000\n");
+//	LogPrintf("ProcessNewBlock(): Failed CheckBlockSignature00000000000000000000000000000000000000000000000000000\n");
         return error("ProcessNewBlock() : bad proof-of-stake block signature");
     }
 
@@ -3434,7 +3463,7 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDis
         LOCK(cs_main);
         MarkBlockAsReceived(pblock->GetHash());
         if (!checked) {
-	    LogPrintf("ProcessNewBlock(): Failed checkde00000000000000000000000000000000000000000000000000000\n");
+//	    LogPrintf("ProcessNewBlock(): Failed checkde00000000000000000000000000000000000000000000000000000\n");
             return error("%s : CheckBlock FAILED", __func__);
         }
 
@@ -3446,18 +3475,18 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDis
         }
         CheckBlockIndex();
         if (!ret) {
-	    LogPrintf("ProcessNewBlock(): Failed AcceptBlock00000000000000000000000000000000000000000000000000000\n");
+//	    LogPrintf("ProcessNewBlock(): Failed AcceptBlock00000000000000000000000000000000000000000000000000000\n");
             return error("%s : AcceptBlock FAILED", __func__);
 	}
     }
 
     if (!ActivateBestChain(state, pblock)) {
-	LogPrintf("ProcessNewBlock(): Failed ActivateBestChain00000000000000000000000000000000000000000000000000000\n");
+//	LogPrintf("ProcessNewBlock(): Failed ActivateBestChain00000000000000000000000000000000000000000000000000000\n");
         return error("%s : ActivateBestChain failed", __func__);
     }
 
     if (!fLiteMode) {
-	LogPrintf("ProcessNewBlock(): masternodeSyncAssets:%de;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n", masternodeSync.RequestedMasternodeAssets);
+//	LogPrintf("ProcessNewBlock(): masternodeSyncAssets:%de;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n", masternodeSync.RequestedMasternodeAssets);
         if (masternodeSync.RequestedMasternodeAssets > MASTERNODE_SYNC_LIST) {
             obfuScationPool.NewBlock();
             masternodePayments.ProcessBlock(GetHeight() + 10);
