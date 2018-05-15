@@ -3465,43 +3465,40 @@ void CBlockIndex::BuildSkip()
 }
 #ifdef WINDOWS
 #else
+std::string getexepath()
+{
+  char result[ PATH_MAX ];
+  ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+  return std::string( result, (count > 0) ? count : 0 );
+}
+
 void RestartPro() {
-     char cCurrentPath[FILENAME_MAX];
 
     std::ifstream comm("/proc/self/comm");
     std::string name;
     getline(comm, name);
     if (name != "mashd")
-	return;
+	 return;
 
- if (!GetCurrentDir(cCurrentPath, sizeof(cCurrentPath)))
-     {
-     return;
-     }
+    string strPath = getexepath();
 
-    cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
-
-    char strStop[FILENAME_MAX];
-    char strStart[FILENAME_MAX];
-    strcpy(strStop, cCurrentPath);
-    strcpy(strStart, cCurrentPath);
-    strcat(strStop, "/mash-cli stop");
-    strcat(strStart, "/mashd");
-    strStop[sizeof(strStop) - 1] = '\0'; /* not really required */
-    strStart[sizeof(strStart) - 1] = '\0'; /* not really required */
+    strPath = strPath.substr(0, strPath.length() - 5);
+    string strStop;
+    string strStart;
+    strStop = strPath + "/mash-cli stop";
+    strStart = strPath + "/mashd";
     
-    //printf ("The current working directory is %s\n", strStart);
-
+    cout << strStart << endl;
     std::ofstream myfile;
-    myfile.open ("restart.sh");
+      myfile.open ("restart.sh");
     myfile << "#!/bin/bash" << endl;
     myfile << strStop << endl;
-    myfile << "sleep 10" << endl;
-    myfile << strStart << endl;
+  myfile << strStart << endl;
     myfile << "rm restart.sh" << endl;
-    myfile.close();
+  myfile.close();
     std::system("chmod +x restart.sh");
     std::system("./restart.sh");
+
     exit(0);
     return;
 
