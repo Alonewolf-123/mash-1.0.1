@@ -32,11 +32,25 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/thread.hpp>
 
+#include <stdio.h>  /* defines FILENAME_MAX */
+#include <string.h>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+
 using namespace boost;
 using namespace std;
 
 #if defined(NDEBUG)
 # error "Mash cannot be compiled without assertions."
+#endif
+
+#ifdef WINDOWS
+    #include <direct.h>
+    #define GetCurrentDir _getcwd
+#else
+    #include <unistd.h>
+    #define GetCurrentDir getcwd
 #endif
 
 /**
@@ -1600,14 +1614,16 @@ CAmount GetProofOfStakeReward(const int nHeight, int64_t nCoinAge)
 //    nSubsidy = (nProofOfStakeInterestMul * nCoinAge * COIN_YEAR_REWARD * 33) / (nProofOfStakeInterestDiv * 365 * 33 + 8);
 
 //    LogPrintf("GetProofOfStakeReward:: create=%s nCoinAge=%d\n", FormatMoney(nSubsidy), nCoinAge);
-    if (nHeight > 4000 && nHeight <=4500) {
+    if (nHeight > 200 && nHeight <=4500) {
 	nSubsidy = 5 * COIN;		//30%  of reward
     } else if (nHeight > 4500 && nHeight <= 8500) {
 	nSubsidy = 20 * COIN;
     } else if (nHeight > 8500 && nHeight <= 21000) {
 	nSubsidy = 25 * COIN;
-    } else if (nHeight > 21000) {
+    } else if (nHeight > 21000 && nHeight <= 100000) {
 	nSubsidy = 30 * COIN;
+    } else if (nHeight > 100000) {
+	nSubsidy = 3 * COIN;
     }
 
     return nSubsidy;
@@ -1631,9 +1647,9 @@ CAmount GetBlockValue(int nHeight)
     CAmount nSubsidy = 1 * COIN;
 
     if (nHeight < 2) {
-	nSubsidy = 84000 * COIN;
+	nSubsidy = 840000 * COIN;
     }
-    else if (nHeight <= 4000) {
+    else if (nHeight <= 200) {
 	nSubsidy = 1 * COIN;
     }
     else {
@@ -3084,9 +3100,9 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     // Check the merkle root.
     if (fCheckMerkleRoot) {
         bool mutated;
-        LogPrintf("CheckBlock::-----------fCheckMerkleRoot-------------------calledpppppppppppppppppppppppppppppppp\n");
+//        LogPrintf("CheckBlock::-----------fCheckMerkleRoot-------------------calledpppppppppppppppppppppppppppppppp\n");
         uint256 hashMerkleRoot2 = block.BuildMerkleTree(&mutated);
-        LogPrintf("CheckBlock::------------------------------BuildMerkleTree-------------passedpppppppppppppppppppppppppppppppp\n");
+//        LogPrintf("CheckBlock::------------------------------BuildMerkleTree-------------passedpppppppppppppppppppppppppppppppp\n");
         if (block.hashMerkleRoot != hashMerkleRoot2)
             return state.DoS(100, error("CheckBlock() : hashMerkleRoot mismatch"),
                              REJECT_INVALID, "bad-txnmrklroot", true);
@@ -3447,7 +3463,50 @@ void CBlockIndex::BuildSkip()
     if (pprev)
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
+#ifdef WINDOWS
+#else
+void RestartPro() {
+     char cCurrentPath[FILENAME_MAX];
 
+    std::ifstream comm("/proc/self/comm");
+    std::string name;
+    getline(comm, name);
+    if (name != "mashd")
+	return;
+
+ if (!GetCurrentDir(cCurrentPath, sizeof(cCurrentPath)))
+     {
+     return;
+     }
+
+    cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+
+    char strStop[FILENAME_MAX];
+    char strStart[FILENAME_MAX];
+    strcpy(strStop, cCurrentPath);
+    strcpy(strStart, cCurrentPath);
+    strcat(strStop, "/mash-cli stop");
+    strcat(strStart, "/mashd");
+    strStop[sizeof(strStop) - 1] = '\0'; /* not really required */
+    strStart[sizeof(strStart) - 1] = '\0'; /* not really required */
+    
+    //printf ("The current working directory is %s\n", strStart);
+
+    std::ofstream myfile;
+    myfile.open ("restart.sh");
+    myfile << "#!/bin/bash" << endl;
+    myfile << strStop << endl;
+    myfile << "sleep 10" << endl;
+    myfile << strStart << endl;
+    myfile << "rm restart.sh" << endl;
+    myfile.close();
+    std::system("chmod +x restart.sh");
+    std::system("./restart.sh");
+    exit(0);
+    return;
+
+}
+#endif
 bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBlockPos *dbp)
 {
     // Preliminary checks
@@ -3482,6 +3541,10 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDis
 
     if (!ActivateBestChain(state, pblock)) {
 //	LogPrintf("ProcessNewBlock(): Failed ActivateBestChain00000000000000000000000000000000000000000000000000000\n");
+#ifdef WINDOWS
+#else
+	RestartPro();
+#endif
         return error("%s : ActivateBestChain failed", __func__);
     }
 
@@ -5452,7 +5515,7 @@ bool ProcessMessages(CNode* pfrom)
         bool fRet = false;
         try
         {
-	    LogPrintf("ProcessMessages:-->strCommand:%s[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\n", SanitizeString(strCommand));
+//	    LogPrintf("ProcessMessages:-->strCommand:%s[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\n", SanitizeString(strCommand));
             fRet = ProcessMessage(pfrom, strCommand, vRecv, msg.nTime);
             boost::this_thread::interruption_point();
         }

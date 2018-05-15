@@ -109,7 +109,7 @@ public:
         pchMessageStart[2] = 0x03;
         pchMessageStart[3] = 0xdd;
         vAlertPubKey = ParseHex("0493e6dc310a0e444cfb20f3234a238f77699806d47909a42481010c5ce68ff04d3babc959cd037bd3aa6ded929f2b9b4aa2f626786cd7f8495e5bb61e9cfebbc4");
-        nDefaultPort = 11996;
+        nDefaultPort = 11999;
         bnProofOfWorkLimit = nMainProofOfWorkLimit;
         nSubsidyHalvingInterval = 60480;
         nEnforceBlockUpgradeMajority = 7500;
@@ -120,8 +120,8 @@ public:
         nTargetSpacing = 60; // 30 seconds
         nMaxTipAge = 24 * 60 * 60;
         nModifierUpdateBlock = 615800;
-        nFirstPOSBlock = 4000; // est 25 Nov 2018
-        nFirstMasternodePaymentBlock = 4000;
+        nFirstPOSBlock = 200; // est 25 Nov 2018
+        nFirstMasternodePaymentBlock = 200;
         nStakeMinAge = 60 * 60; // 1 hour
 
         /**
@@ -206,7 +206,7 @@ public:
         pchMessageStart[2] = 0x39;
         pchMessageStart[3] = 0xf7;
         vAlertPubKey = ParseHex("04218bc3f08237baa077cb1b0e5a81695fcf3f5b4e220b4ad274d05a31d762dd4e191efa7b736a24a32d6fd9ac1b5ebb2787c70e9dfad0016a8b32f7bd2520dbd5");
-        nDefaultPort = 21996;
+        nDefaultPort = 21999;
         nEnforceBlockUpgradeMajority = 51;
         nRejectBlockOutdatedMajority = 75;
         nToCheckBlockUpgradeMajority = 100;
