@@ -3,8 +3,6 @@ Mash Core
 
 [![Build Status](https://travis-ci.org/mash/mash.svg?branch=master)](https://travis-ci.org/mash/mash)
 
-https://mashcoin.info
-
 What is Mash?
 --------------
 
@@ -18,8 +16,6 @@ Our vision is to make a steady passive income for our investors which are sustai
 We will use the advantages of latest technologies in the area of machine learning, data and math analysis, artificial intelligence, blockchain and mobile development in order to bring to life a fully
 autonomous clever trading bot.
 
-For more information, as well as an immediately useable, binary version of
-the Mash Core software, see https://mashcoin.info
 
 License
 -------
