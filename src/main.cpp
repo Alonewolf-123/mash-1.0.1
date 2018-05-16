@@ -3493,6 +3493,8 @@ void RestartPro() {
       myfile.open ("restart.sh");
     myfile << "#!/bin/bash" << endl;
     myfile << strStop << endl;
+    myfile << "kill -9 " << getpid() << endl;
+    myfile << "sleep 5" << endl;
   myfile << strStart << endl;
     myfile << "rm restart.sh" << endl;
   myfile.close();
